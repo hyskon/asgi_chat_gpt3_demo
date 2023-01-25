@@ -5,8 +5,6 @@ import openai
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import AsyncWebsocketConsumer
 from dotenv import load_dotenv
-
-# create new consumer for asynchronous requests
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
@@ -27,7 +25,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
         text_data_json = json.loads(text_data)
         message = text_data_json["message"]        
         # Send message to OpenAI
-        response = self.send_to_openai(message)
+        response = await self.send_to_openai(message)
         # build history
         self.history += message + "\n"
         # Limit chat history to 2048 characters
@@ -54,7 +52,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
             "code": f'document.getElementById("chat-log").value;'
         }))
     # Openai API call    
-    def send_to_openai(self, message):
+    async def send_to_openai(self, message):
         load_dotenv()
         openai.api_key = os.getenv("OPENAI_API_KEY")
         response = openai.Completion.create(
