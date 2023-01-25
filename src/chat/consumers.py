@@ -1,76 +1,65 @@
 # chat/consumers.py
 import json
+import os
 import openai
 from asgiref.sync import async_to_sync
-from channels.generic.websocket import WebsocketConsumer
+from channels.generic.websocket import AsyncWebsocketConsumer
 from dotenv import load_dotenv
 
-class ChatConsumer(WebsocketConsumer):
-    # variable as a string that holds the chat history
-    # history = ""
-    
-    def connect(self):
+# create new consumer for asynchronous requests
+class ChatConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
         self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
-        self.group_name = "chat_%s" % self.room_name
+        self.room_group_name = "chat_%s" % self.room_name
+        # initialize the history
         self.history = ""
         # Join room group
-        async_to_sync(self.channel_layer.group_add)(
-            self.group_name, self.channel_name
-        )
+        await self.channel_layer.group_add(self.room_group_name, self.channel_name)
 
-        self.accept()
+        await self.accept()
 
-    def disconnect(self, close_code):
+    async def disconnect(self, close_code):
         # Leave room group
-        async_to_sync(self.channel_layer.group_discard)(
-            self.group_name, self.channel_name
-        )
+        await self.channel_layer.group_discard(self.room_group_name, self.channel_name)
 
     # Receive message from WebSocket
-    def receive(self, text_data):
+    async def receive(self, text_data):
         text_data_json = json.loads(text_data)
-        message = text_data_json["message"]
-        # Send message to OpenAI
-        # Add user message to chat history
-        self.history += message + "\n"
-        # Limit chat history to 2000 tokens
-        self.history = self.history[-2000:]
+        message = text_data_json["message"]        
         # Send message to OpenAI
         response = self.send_to_openai(message)
+        # build history
+        self.history += message + "\n"
+        # Limit chat history to 2048 characters
+        self.history = self.history[-2048:]
         # Add bot response to chat history
         self.history += response + "\n"
-        # Send user messages to room group        
-        async_to_sync(self.channel_layer.group_send)(
-            self.group_name, 
-            {
-                "type": "chat_message", 
-                "message": message
-            }
-        )        
-        # Send response chatgpt to group
-        async_to_sync(self.channel_layer.group_send)(
-            self.group_name, 
-            {
-                "type": "chat_message", 
-                "message": response
-            }
-        )        
+        # Send message to room group
+        await self.channel_layer.group_send(
+            self.room_group_name, {"type": "chat_message", "message": message}
+        )
+        # Send bot response to room group
+        await self.channel_layer.group_send(
+            self.room_group_name, {"type": "chat_message", "message": response}
+        )
 
     # Receive message from room group
-    def chat_message(self, event):
+    async def chat_message(self, event):
         message = event["message"]
-        self.send(text_data=json.dumps({"message": message}))
-        self.send(text_data=json.dumps({
+
+        # Send message to WebSocket
+        await self.send(text_data=json.dumps({"message": message}))
+        await self.send(text_data=json.dumps({
             "command": "javascript",
             "code": f'document.getElementById("chat-log").value;'
         }))
-
+    # Openai API call    
     def send_to_openai(self, message):
         load_dotenv()
         openai.api_key = os.getenv("OPENAI_API_KEY")
         response = openai.Completion.create(
             engine="text-davinci-003",
-            prompt=f"\n{self.history}\n\n{message}\n",
+            prompt=f"{self.history}\n{message}\n",
             max_tokens=2048,
             n =1,
             stop=None,
