@@ -3,6 +3,7 @@
         "asgiref",
         "davinci",
         "dotenv",
-        "openai"
+        "openai",
+        "Sidepanel"
     ]
 }
