@@ -28966,7 +28966,144 @@ var Sidepanel = function Sidepanel(props) {
 };
 var _default = Sidepanel;
 exports.default = _default;
-},{"react":"node_modules/react/index.js"}],"src/containers/Chat.js":[function(require,module,exports) {
+},{"react":"node_modules/react/index.js"}],"src/websocket.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) { return typeof obj; } : function (obj) { return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }, _typeof(obj); }
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); enumerableOnly && (symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; })), keys.push.apply(keys, symbols); } return keys; }
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = null != arguments[i] ? arguments[i] : {}; i % 2 ? ownKeys(Object(source), !0).forEach(function (key) { _defineProperty(target, key, source[key]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)) : ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } return target; }
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, _toPropertyKey(descriptor.key), descriptor); } }
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
+function _defineProperty(obj, key, value) { key = _toPropertyKey(key); if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+function _toPropertyKey(arg) { var key = _toPrimitive(arg, "string"); return _typeof(key) === "symbol" ? key : String(key); }
+function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input === null) return input; var prim = input[Symbol.toPrimitive]; if (prim !== undefined) { var res = prim.call(input, hint || "default"); if (_typeof(res) !== "object") return res; throw new TypeError("@@toPrimitive must return a primitive value."); } return (hint === "string" ? String : Number)(input); }
+var WebSocketService = /*#__PURE__*/function () {
+  function WebSocketService() {
+    _classCallCheck(this, WebSocketService);
+    _defineProperty(this, "callbacks", {});
+    this.socketRef = null;
+  }
+  _createClass(WebSocketService, [{
+    key: "connect",
+    value: function connect() {
+      var _this = this;
+      var path = 'ws://127.0.0.1:8000/ws/chat/test/';
+      this.socketRef = new WebSocket(path);
+      this.socketRef.onopen = function () {
+        console.log('websocket is open');
+      };
+      this.socketRef.onmessage = function (e) {
+        // sending a message
+      };
+      this.socketRef.onerror = function (e) {
+        console.log(e.message);
+      };
+      this.socketRef.onclose = function () {
+        console.log('websocket closed');
+        _this.connect();
+      };
+    }
+  }, {
+    key: "socketNewMessage",
+    value: function socketNewMessage(data) {
+      var parsedData = JSON.parse(data);
+      var command = parsedData.command;
+      if (Object.keys(this.callbacks).length === 0) {
+        return;
+      }
+      if (command === 'messages') {
+        this.callbacks[command](parsedData.messages);
+      }
+      if (command === 'new_message') {
+        this.callbacks[command](parsedData.message);
+      }
+    }
+  }, {
+    key: "fetchMessages",
+    value: function fetchMessages(username) {
+      this.sendMessage({
+        command: 'fetch_messages',
+        username: username
+      });
+    }
+  }, {
+    key: "newChatMessage",
+    value: function newChatMessage(message) {
+      this.sendMessage({
+        command: 'new_messages',
+        from: message.from,
+        message: message.content
+      });
+    }
+
+    // Conveniant method for adding callback on the chat class
+  }, {
+    key: "addCallbacks",
+    value: function addCallbacks(messagesCallback, newMessageCallback) {
+      this.callbacks['messages'] = messagesCallback;
+      this.callbacks['new_message'] = newMessageCallback;
+    }
+
+    // the actual sending of a message to the socket
+  }, {
+    key: "sendMessage",
+    value: function sendMessage(data) {
+      try {
+        this.socketRef.send(JSON.stringify(_objectSpread({}, data)));
+      } catch (err) {
+        console.log(err.message);
+      }
+    }
+  }, {
+    key: "state",
+    value: function state() {
+      return this.socketRef.readyState;
+    }
+  }, {
+    key: "waitForSocketConnection",
+    value: function waitForSocketConnection(callback) {
+      var socket = this.socketRef;
+      var recursion = this.waitForSocketConnection;
+      // ensures this method continuously called until it is connected
+      setTimeout(function () {
+        if (socket.readyState === 1) {
+          console.log('connection is established');
+          // when connection is established it will stop
+          if (callback != null) {
+            callback();
+          }
+          return;
+        } else {
+          console.log('waiting for connection');
+          // it will reiterate to establish connection
+          recursion(callback);
+        }
+      }, 1);
+    }
+  }], [{
+    key: "getInstance",
+    value:
+    // will be populated through the convienient methods below
+
+    function getInstance() {
+      if (!WebSocketService.instance) {
+        WebSocketService.instance = new WebSocketService();
+      }
+      return WebSocketService.instance;
+    }
+  }]);
+  return WebSocketService;
+}(); // grab an actual instance of the socket connection
+_defineProperty(WebSocketService, "instance", null);
+var WebSocketInstance = WebSocketService.getInstance();
+var _default = WebSocketInstance;
+exports.default = _default;
+},{}],"src/containers/Chat.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -28975,13 +29112,18 @@ Object.defineProperty(exports, "__esModule", {
 exports.default = void 0;
 var _react = _interopRequireDefault(require("react"));
 var _Sidepanel = _interopRequireDefault(require("./Sidepanel/Sidepanel"));
+var _websocket = _interopRequireDefault(require("../websocket"));
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) { return typeof obj; } : function (obj) { return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }, _typeof(obj); }
+function _toConsumableArray(arr) { return _arrayWithoutHoles(arr) || _iterableToArray(arr) || _unsupportedIterableToArray(arr) || _nonIterableSpread(); }
+function _nonIterableSpread() { throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); }
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+function _iterableToArray(iter) { if (typeof Symbol !== "undefined" && iter[Symbol.iterator] != null || iter["@@iterator"] != null) return Array.from(iter); }
+function _arrayWithoutHoles(arr) { if (Array.isArray(arr)) return _arrayLikeToArray(arr); }
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i]; return arr2; }
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, _toPropertyKey(descriptor.key), descriptor); } }
 function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); Object.defineProperty(Constructor, "prototype", { writable: false }); return Constructor; }
-function _toPropertyKey(arg) { var key = _toPrimitive(arg, "string"); return _typeof(key) === "symbol" ? key : String(key); }
-function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input === null) return input; var prim = input[Symbol.toPrimitive]; if (prim !== undefined) { var res = prim.call(input, hint || "default"); if (_typeof(res) !== "object") return res; throw new TypeError("@@toPrimitive must return a primitive value."); } return (hint === "string" ? String : Number)(input); }
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); Object.defineProperty(subClass, "prototype", { writable: false }); if (superClass) _setPrototypeOf(subClass, superClass); }
 function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf ? Object.setPrototypeOf.bind() : function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
 function _createSuper(Derived) { var hasNativeReflectConstruct = _isNativeReflectConstruct(); return function _createSuperInternal() { var Super = _getPrototypeOf(Derived), result; if (hasNativeReflectConstruct) { var NewTarget = _getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return _possibleConstructorReturn(this, result); }; }
@@ -28989,16 +29131,68 @@ function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) ===
 function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
 function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); return true; } catch (e) { return false; } }
 function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf.bind() : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+function _defineProperty(obj, key, value) { key = _toPropertyKey(key); if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+function _toPropertyKey(arg) { var key = _toPrimitive(arg, "string"); return _typeof(key) === "symbol" ? key : String(key); }
+function _toPrimitive(input, hint) { if (_typeof(input) !== "object" || input === null) return input; var prim = input[Symbol.toPrimitive]; if (prim !== undefined) { var res = prim.call(input, hint || "default"); if (_typeof(res) !== "object") return res; throw new TypeError("@@toPrimitive must return a primitive value."); } return (hint === "string" ? String : Number)(input); }
 var Chat = /*#__PURE__*/function (_React$Component) {
   _inherits(Chat, _React$Component);
   var _super = _createSuper(Chat);
-  function Chat() {
+  function Chat(props) {
+    var _this;
     _classCallCheck(this, Chat);
-    return _super.apply(this, arguments);
+    _this = _super.call(this, props);
+    _defineProperty(_assertThisInitialized(_this), "renderMessages", function (messages) {
+      var currentUser = 'Hylke';
+      return messages.map(function (message) {
+        /*#__PURE__*/_react.default.createElement("li", {
+          key: message.id,
+          className: message.author === currentUser ? 'sent' : 'replies'
+        }, /*#__PURE__*/_react.default.createElement("img", {
+          src: "http://emilcarlsson.se/assets/harveyspecter.png"
+        }), /*#__PURE__*/_react.default.createElement("p", null, message.content));
+      });
+    });
+    _this.state = {};
+    _this.waitForSocketConnection(function () {
+      _websocket.default.addCallbacks(_this.setMessages.bind(_assertThisInitialized(_this)), _this.addMessages.bind(_assertThisInitialized(_this)));
+      _websocket.default.fetchMessages(_this.props.currentUser);
+    });
+    return _this;
   }
   _createClass(Chat, [{
+    key: "waitForSocketConnection",
+    value: function waitForSocketConnection(callback) {
+      // meaning this Chat
+      var component = this;
+      setTimeout(function () {
+        if (_websocket.default.state() === 1) {
+          console.log('connection is secure');
+          callback();
+          return;
+        } else {
+          console.log('waiting for connection...');
+          component.waitForSocketConnection(callback);
+        }
+      }, 100);
+    }
+  }, {
+    key: "addMessages",
+    value: function addMessages(message) {
+      this.setState({
+        messages: [].concat(_toConsumableArray(this.state.messages), [message])
+      });
+    }
+  }, {
+    key: "setMessages",
+    value: function setMessages(messages) {
+      this.setState({
+        messages: messages.reverse()
+      });
+    }
+  }, {
     key: "render",
     value: function render() {
+      var messages = this.state.messages;
       return /*#__PURE__*/_react.default.createElement("div", {
         id: "frame"
       }, /*#__PURE__*/_react.default.createElement(_Sidepanel.default, null), /*#__PURE__*/_react.default.createElement("div", {
@@ -29023,7 +29217,7 @@ var Chat = /*#__PURE__*/function (_React$Component) {
         className: "messages"
       }, /*#__PURE__*/_react.default.createElement("ul", {
         id: "chat-log"
-      })), /*#__PURE__*/_react.default.createElement("div", {
+      }, messages && this.renderMessages(messages))), /*#__PURE__*/_react.default.createElement("div", {
         className: "message-input"
       }, /*#__PURE__*/_react.default.createElement("div", {
         className: "wrap"
@@ -29047,12 +29241,13 @@ var Chat = /*#__PURE__*/function (_React$Component) {
 }(_react.default.Component);
 var _default = Chat;
 exports.default = _default;
-},{"react":"node_modules/react/index.js","./Sidepanel/Sidepanel":"src/containers/Sidepanel/Sidepanel.js"}],"src/index.js":[function(require,module,exports) {
+},{"react":"node_modules/react/index.js","./Sidepanel/Sidepanel":"src/containers/Sidepanel/Sidepanel.js","../websocket":"src/websocket.js"}],"src/index.js":[function(require,module,exports) {
 "use strict";
 
 var _react = _interopRequireDefault(require("react"));
 var _reactDom = _interopRequireDefault(require("react-dom"));
 var _Chat = _interopRequireDefault(require("./containers/Chat"));
+var _websocket = _interopRequireDefault(require("./websocket"));
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 function _typeof(obj) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) { return typeof obj; } : function (obj) { return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }, _typeof(obj); }
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -29075,6 +29270,11 @@ var App = /*#__PURE__*/function (_React$Component) {
     return _super.apply(this, arguments);
   }
   _createClass(App, [{
+    key: "componentDidMount",
+    value: function componentDidMount() {
+      _websocket.default.connect();
+    }
+  }, {
     key: "render",
     value: function render() {
       return /*#__PURE__*/_react.default.createElement(_Chat.default, null);
@@ -29083,7 +29283,7 @@ var App = /*#__PURE__*/function (_React$Component) {
   return App;
 }(_react.default.Component);
 _reactDom.default.render( /*#__PURE__*/_react.default.createElement(App, null), document.getElementById('app'));
-},{"react":"node_modules/react/index.js","react-dom":"node_modules/react-dom/index.js","./containers/Chat":"src/containers/Chat.js"}],"../../../../Users/hysko/AppData/Roaming/npm/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"react":"node_modules/react/index.js","react-dom":"node_modules/react-dom/index.js","./containers/Chat":"src/containers/Chat.js","./websocket":"src/websocket.js"}],"../../../../Users/hysko/AppData/Roaming/npm/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -29108,7 +29308,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "64813" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "55006" + '/');
   ws.onmessage = function (event) {
     checkedAssets = {};
     assetsToAccept = [];
