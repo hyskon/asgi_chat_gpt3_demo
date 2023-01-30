@@ -28863,7 +28863,33 @@ if ("development" === 'production') {
 } else {
   module.exports = require('./cjs/react-dom.development.js');
 }
-},{"./cjs/react-dom.development.js":"node_modules/react-dom/cjs/react-dom.development.js"}],"src/containers/Sidepanel/Sidepanel.js":[function(require,module,exports) {
+},{"./cjs/react-dom.development.js":"node_modules/react-dom/cjs/react-dom.development.js"}],"node_modules/react-dom/client.js":[function(require,module,exports) {
+'use strict';
+
+var m = require('react-dom');
+if ("development" === 'production') {
+  exports.createRoot = m.createRoot;
+  exports.hydrateRoot = m.hydrateRoot;
+} else {
+  var i = m.__SECRET_INTERNALS_DO_NOT_USE_OR_YOU_WILL_BE_FIRED;
+  exports.createRoot = function (c, o) {
+    i.usingClientEntryPoint = true;
+    try {
+      return m.createRoot(c, o);
+    } finally {
+      i.usingClientEntryPoint = false;
+    }
+  };
+  exports.hydrateRoot = function (c, h, o) {
+    i.usingClientEntryPoint = true;
+    try {
+      return m.hydrateRoot(c, h, o);
+    } finally {
+      i.usingClientEntryPoint = false;
+    }
+  };
+}
+},{"react-dom":"node_modules/react-dom/index.js"}],"src/containers/Sidepanel/Sidepanel.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -28997,8 +29023,11 @@ var WebSocketService = /*#__PURE__*/function () {
       this.socketRef.onopen = function () {
         console.log('websocket is open');
       };
+      this.socketNewMessage(JSON.stringify({
+        command: 'fetch_messages'
+      }));
       this.socketRef.onmessage = function (e) {
-        // sending a message
+        _this.socketNewMessage(e.data);
       };
       this.socketRef.onerror = function (e) {
         console.log(e.message);
@@ -29040,16 +29069,12 @@ var WebSocketService = /*#__PURE__*/function () {
         message: message.content
       });
     }
-
-    // Conveniant method for adding callback on the chat class
   }, {
     key: "addCallbacks",
     value: function addCallbacks(messagesCallback, newMessageCallback) {
       this.callbacks['messages'] = messagesCallback;
       this.callbacks['new_message'] = newMessageCallback;
     }
-
-    // the actual sending of a message to the socket
   }, {
     key: "sendMessage",
     value: function sendMessage(data) {
@@ -29072,7 +29097,7 @@ var WebSocketService = /*#__PURE__*/function () {
       // ensures this method continuously called until it is connected
       setTimeout(function () {
         if (socket.readyState === 1) {
-          console.log('connection is established');
+          console.log('connection is secure');
           // when connection is established it will stop
           if (callback != null) {
             callback();
@@ -29245,7 +29270,7 @@ exports.default = _default;
 "use strict";
 
 var _react = _interopRequireDefault(require("react"));
-var _reactDom = _interopRequireDefault(require("react-dom"));
+var _client = require("react-dom/client");
 var _Chat = _interopRequireDefault(require("./containers/Chat"));
 var _websocket = _interopRequireDefault(require("./websocket"));
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -29282,8 +29307,8 @@ var App = /*#__PURE__*/function (_React$Component) {
   }]);
   return App;
 }(_react.default.Component);
-_reactDom.default.render( /*#__PURE__*/_react.default.createElement(App, null), document.getElementById('app'));
-},{"react":"node_modules/react/index.js","react-dom":"node_modules/react-dom/index.js","./containers/Chat":"src/containers/Chat.js","./websocket":"src/websocket.js"}],"../../../../Users/hysko/AppData/Roaming/npm/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+(0, _client.createRoot)(document.getElementById('app')).render( /*#__PURE__*/_react.default.createElement(App, null));
+},{"react":"node_modules/react/index.js","react-dom/client":"node_modules/react-dom/client.js","./containers/Chat":"src/containers/Chat.js","./websocket":"src/websocket.js"}],"../../../../Users/hysko/AppData/Roaming/npm/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -29308,7 +29333,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "55006" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "62052" + '/');
   ws.onmessage = function (event) {
     checkedAssets = {};
     assetsToAccept = [];

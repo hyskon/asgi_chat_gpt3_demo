@@ -1,20 +1,18 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import Chat from './containers/Chat';
 import WebSocketInstance from './websocket';
 
-
 class App extends React.Component {
-
   componentDidMount() {
     WebSocketInstance.connect();
   }
 
   render() {
-    return(
+    return (
       <Chat />
-    )
+    );
   }
 }
 
-ReactDOM.render(<App />, document.getElementById('app'));
+createRoot(document.getElementById('app')).render(<App />);

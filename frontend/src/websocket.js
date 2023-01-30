@@ -22,8 +22,11 @@ class WebSocketService {
         this.socketRef.onopen = () => {
             console.log('websocket is open');
         };
+        this.socketNewMessage(JSON.stringify({
+            command: 'fetch_messages'
+        }))
         this.socketRef.onmessage = e => {
-            // sending a message
+            this.socketNewMessage(e.data)
         };
         this.socketRef.onerror = e => {
             console.log(e.message);
@@ -49,10 +52,7 @@ class WebSocketService {
     }
     
     fetchMessages(username) {
-        this.sendMessage({
-            command: 'fetch_messages',
-            username: username
-        });
+        this.sendMessage({ command: 'fetch_messages', username: username });
     }
 
     newChatMessage(message) {
@@ -63,13 +63,11 @@ class WebSocketService {
         });
     }
 
-    // Conveniant method for adding callback on the chat class
     addCallbacks(messagesCallback, newMessageCallback) {
         this.callbacks['messages'] = messagesCallback;
         this.callbacks['new_message'] = newMessageCallback;
     }
 
-    // the actual sending of a message to the socket
     sendMessage(data) {
         try {
             this.socketRef.send(JSON.stringify({...data}));
@@ -89,7 +87,7 @@ class WebSocketService {
         setTimeout(            
             function () {
                 if (socket.readyState === 1 ){
-                    console.log('connection is established');
+                    console.log('connection is secure');
                     // when connection is established it will stop
                     if (callback != null) {
                         callback();
