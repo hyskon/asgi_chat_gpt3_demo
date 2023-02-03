@@ -24,7 +24,7 @@ class WebSocketService {
         };
         this.socketNewMessage(JSON.stringify({
             command: 'fetch_messages'
-        }))
+        }));
         this.socketRef.onmessage = e => {
             this.socketNewMessage(e.data)
         };
@@ -52,12 +52,14 @@ class WebSocketService {
     }
     
     fetchMessages(username) {
-        this.sendMessage({ command: 'fetch_messages', username: username });
+        this.sendMessage({ 
+            command: 'fetch_messages', 
+            username: username });
     }
 
     newChatMessage(message) {
         this.sendMessage({
-            command: 'new_messages',
+            command: 'new_message',
             from: message.from,
             message: message.content
         });
@@ -78,27 +80,6 @@ class WebSocketService {
 
     state() {
         return this.socketRef.readyState;
-    }
-
-    waitForSocketConnection(callback) {
-        const socket = this.socketRef;
-        const recursion = this.waitForSocketConnection;
-        // ensures this method continuously called until it is connected
-        setTimeout(            
-            function () {
-                if (socket.readyState === 1 ){
-                    console.log('connection is secure');
-                    // when connection is established it will stop
-                    if (callback != null) {
-                        callback();
-                    }
-                    return
-                } else {
-                   console.log('waiting for connection');
-                   // it will reiterate to establish connection
-                   recursion(callback);
-                }
-        }, 1);
     }
 }
 

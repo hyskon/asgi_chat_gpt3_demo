@@ -1,0 +1,36 @@
+# This is the main folder structure of the project
+
+- .vscode (contains the specific workspace settings for the project)
+- env (the environment for the project with all the packages)
+- frontend (this contains a react frontend, served with parcel)
+-- .cashe (cashe for the frontend)
+-- dist (pretty self explanatory)
+-- node_modules (the node_modules for the frontend)
+-- src (the source folder for the frontend, contains files like .babelrc, package.json, index.html, websocket.js, index.js)
+--- assets
+--- containers (contains chat.js)
+---- sidepanel (has one file in it to load the sidepanel of the chat app dynamically)
+- src (this is the django backend main folder, it contains the manage.py file)
+-- chat (this is the django app for the chat contains the consumer.py file)
+-- code_companion (main project name and thus the generated folder, it's parent folder "src" used to have the same name, this folder holds the settings.py and asgi.py)
+-- static (this is the static folder)
+
+The files in the main folder are .gitignore and requirements.txt
+
+Packeges installed for this project:
+
+# for django
+- openai
+- openai-cli
+- channels
+- dapphne
+- django itself obviously
+- other smaller packages through pip
+
+# for the react frontend
+- react
+- parcel
+- other smaller packages through npm
+
+This is the project structure.
+
