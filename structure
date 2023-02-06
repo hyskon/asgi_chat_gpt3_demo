@@ -1,36 +1,17 @@
-# This is the main folder structure of the project
+1 First, you'll need to setup Django Channels for handling WebSockets. This will allow you to have real-time communication between the client and the server.
+2 You'll need to create a Django model for storing chat messages and a serializer for serializing/deserializing the data for transmission over WebSockets.
+3 You'll then create views for handling the different chat functionalities, such as sending messages, retrieving previous messages, etc.
+4 For integrating OpenAI, you can use the OpenAI API to send messages and receive the AI's responses. You can store the context information in the database and retrieve it when needed.
+5 For group chat functionality, you can create a separate channel for each group and have users join/leave the channel as needed.
 
-- .vscode (contains the specific workspace settings for the project)
-- env (the environment for the project with all the packages)
-- frontend (this contains a react frontend, served with parcel)
--- .cashe (cashe for the frontend)
--- dist (pretty self explanatory)
--- node_modules (the node_modules for the frontend)
--- src (the source folder for the frontend, contains files like .babelrc, package.json, index.html, websocket.js, index.js)
---- assets
---- containers (contains chat.js)
----- sidepanel (has one file in it to load the sidepanel of the chat app dynamically)
-- src (this is the django backend main folder, it contains the manage.py file)
--- chat (this is the django app for the chat contains the consumer.py file)
--- code_companion (main project name and thus the generated folder, it's parent folder "src" used to have the same name, this folder holds the settings.py and asgi.py)
--- static (this is the static folder)
 
-The files in the main folder are .gitignore and requirements.txt
+Current setup:
 
-Packeges installed for this project:
+- I'm running a redis server through wsl ubuntu on my local machine
+- In django I have configured th settings.py, routing.py and asgi.py to handle the channels configuration
+- I have also created an app in my project called chat
+- Inside chat I'm using 2 templates index.html and room.html representing the landingpage and the chat interface
+- Inside chat I also created a file called consumer.py with the chatConsumer
+- I have also created one model in models.py representing the messages (I must expand this to make sure I can store messages under a room and add contacts to this as well)
 
-# for django
-- openai
-- openai-cli
-- channels
-- dapphne
-- django itself obviously
-- other smaller packages through pip
-
-# for the react frontend
-- react
-- parcel
-- other smaller packages through npm
-
-This is the project structure.
-
+I can show you the code of the various relevant scripts.

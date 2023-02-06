@@ -12,4 +12,4 @@ class Message(models.Model):
         return self.author.username
     
     def last_25_messages():
-        return Message.objects.order_by('-timestamp').all()[:25]
+        return Message.objects.order_by('timestamp').all()[:25]
